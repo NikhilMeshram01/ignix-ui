@@ -770,7 +770,7 @@
           "type": "component"
         },
         "hook": {
-          "path": "components/file-upload/use-file-upload.ts",
+          "path": "components/file-upload/useFileUpload.ts",
           "type": "hook"
         },
         "utils": {
