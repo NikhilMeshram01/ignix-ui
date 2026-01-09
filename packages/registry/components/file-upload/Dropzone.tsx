@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, Loader2 } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
-import type { DropzoneProps } from '../types';
-import { formatFileSize } from '../utils';
+import { cn } from '../../../utils/cn';
+import type { DropzoneProps } from './types';
+import { formatFileSize } from './utils';
 
 
 /**

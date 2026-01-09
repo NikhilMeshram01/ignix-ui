@@ -785,13 +785,20 @@
           "path": "components/file-upload/constants.ts",
           "type": "constants"
         },
-        "component": {
-          "path": [
-            "components/file-upload/components/DropZone.tsx",
-            "components/file-upload/components/FileList.tsx",
-            "components/file-upload/components/UploadButton.tsx",
-            "components/file-upload/components/validationErrors.tsx"
-          ],
+        "DropZone":{
+          "path": "components/file-upload/Dropzone.tsx",
+          "type": "component"
+        },
+        "FileList": {
+          "path": "components/file-upload/FileList.tsx",
+          "type": "component"
+        },
+        "UploadButton": {
+          "path": "components/file-upload/UploadButton.tsx",
+          "type": "component"
+        },
+        "ValidationErrors": {
+          "path": "components/file-upload/ValidationErrors.tsx",
           "type": "component"
         }
       }

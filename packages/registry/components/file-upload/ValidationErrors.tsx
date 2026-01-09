@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
-import { Typography } from '../../typography';
-import { COLOR_PALETTE } from '../constants';
-import type { ValidationErrorsProps } from '../types';
+import { cn } from '../../../utils/cn';
+import { Typography } from '../typography';
+import { COLOR_PALETTE } from './constants';
+import type { ValidationErrorsProps } from './types';
 
 
 /**

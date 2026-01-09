@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { type FileListProps, type FileWithPreview } from '../types';
-import { Typography } from '../../typography';
-import { formatFileSize, isImageFile, getFileIcon, getFileTypeText, getIconContainerColor } from '../utils';
+import { type FileListProps, type FileWithPreview } from './types';
+import { Typography } from '../typography';
+import { formatFileSize, isImageFile, getFileIcon, getFileTypeText, getIconContainerColor } from './utils';
 import { FileText, File, FileImage, Video, Music, Archive, AlertCircle, CheckCircle, Loader2, Trash2 } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
-import { Avatar } from '../../avatar';
+import { cn } from '../../../utils/cn';
+import { Avatar } from '../avatar';
 
 /**
  * FileList component displays a list of uploaded files with detailed information,

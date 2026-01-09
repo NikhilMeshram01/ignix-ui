@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import UploadButton from '../../components/UploadButton';
+import UploadButton from '../../UploadButton';
 import type { UploadButtonProps } from '../../types';
 
 // Mock dependencies

@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Trash2, Loader2 } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
-import { Button } from '../../button';
-import { type UploadButtonProps } from '../types';
+import { cn } from '../../../utils/cn';
+import { Button } from '../button';
+import { type UploadButtonProps } from './types';
 
 /**
  * UploadButton component provides the main file upload interface with a primary action button,

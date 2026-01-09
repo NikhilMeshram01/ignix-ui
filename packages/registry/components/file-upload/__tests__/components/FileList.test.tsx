@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
-import FileList from '../../components/FileList';
+import FileList from '../../FileList';
 import type { FileListProps, FileWithPreview } from '../../types';
 
 // Mock dependencies

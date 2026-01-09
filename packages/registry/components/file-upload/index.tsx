@@ -5,10 +5,10 @@ import React from 'react';
 import { cn } from '../../../utils/cn';
 import type { FileUploadProps } from './types';
 import { useFileUpload } from './useFileUpload';
-import Dropzone from './components/Dropzone';
-import UploadButton from './components/UploadButton';
-import FileList from './components/FileList';
-import ValidationErrors from './components/ValidationErrors';
+import Dropzone from './Dropzone';
+import UploadButton from './UploadButton';
+import FileList from './FileList';
+import ValidationErrors from './ValidationErrors';
 
 /**
  * FileUpload component provides a comprehensive file upload interface with drag-and-drop support,
