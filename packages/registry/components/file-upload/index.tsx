@@ -4,7 +4,7 @@
 import React from 'react';
 import { cn } from '../../../utils/cn';
 import type { FileUploadProps } from './types';
-import { useFileUpload } from './hooks/useFileUpload';
+import { useFileUpload } from './useFileUpload';
 import Dropzone from './components/Dropzone';
 import UploadButton from './components/UploadButton';
 import FileList from './components/FileList';

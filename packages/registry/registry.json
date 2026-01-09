@@ -766,11 +766,11 @@
       "componentDependencies": ["button", "avatar", "typography"],
       "files": {
         "main": {
-          "path": "components/file-upload",
+          "path": "components/file-upload/index.tsx",
           "type": "component"
         },
         "hook": {
-          "path": "components/file-upload/hooks/use-file-upload.ts",
+          "path": "components/file-upload/use-file-upload.ts",
           "type": "hook"
         },
         "utils": {

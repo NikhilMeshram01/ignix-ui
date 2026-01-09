@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useFileUpload } from '../../hooks/useFileUpload';
+import { useFileUpload } from '../../useFileUpload';
 
 // Mock URL
 global.URL.createObjectURL = vi.fn();

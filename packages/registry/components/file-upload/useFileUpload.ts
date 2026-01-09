@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
-import { type FileWithPreview, type UseFileUploadProps } from '../types';
+import { type FileWithPreview, type UseFileUploadProps } from './types';
 import { 
     createImagePreview, 
     validateFile, 
     isImageFile, 
     generateFileId,
-} from '../utils';
+} from './utils';
 
 /**
  * Custom React hook for managing file upload state and operations
