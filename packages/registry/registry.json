@@ -778,7 +778,7 @@
           "type": "types"
         },
         "utils": {
-          "path": "components/file-upload/utils.ts",
+          "path": "components/file-upload/utils.tsx",
           "type": "utils"
         },
         "constants": {

@@ -57,11 +57,17 @@ export class ComponentService {
         const fileInfo = componentConfig.files[fileKey];
         const fileUrl = `${registryBaseUrl}/${fileInfo.path}`;
 
+        console.log('fileU rl:', fileUrl);
+        console.log('Fetching file from URL:', fileUrl);
+
         const { data: content } = await axios.get(fileUrl, { responseType: 'text' });
 
         // Use path.basename to handle nested file structures within the component folder
         const fileName = path.basename(fileInfo.path);
         const filePath = path.join(componentDir, fileName);
+
+        console.log('Writing file:', filePath);
+        console.log('file Name:', fileName);
 
         await fs.writeFile(filePath, content);
         installedFiles.push(filePath);
