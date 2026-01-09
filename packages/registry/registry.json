@@ -398,46 +398,35 @@
       }
     },
     "checkbox": {
-      "name":"Checkbox",
-      "description":"An animated checkbox component with different variants and animation options",
-      "dependencies":[
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "files":{
-        "main":{
-          "path":"components/checkbox/index.tsx",
-          "type":"component"
+      "name": "Checkbox",
+      "description": "An animated checkbox component with different variants and animation options",
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "files": {
+        "main": {
+          "path": "components/checkbox/index.tsx",
+          "type": "component"
         }
       }
     },
     "radio": {
-      "name":"Radio",
-      "description":"An animated radio component with different variants and animation options",
-      "dependencies":[
-        "framer-motion",
-        "class-variance-authority",
-        "@radix-ui/react-radio-group"
-      ],
-      "files":{
-        "main":{
-          "path":"components/radio/index.tsx",
-          "type":"component"
+      "name": "Radio",
+      "description": "An animated radio component with different variants and animation options",
+      "dependencies": ["framer-motion", "class-variance-authority", "@radix-ui/react-radio-group"],
+      "files": {
+        "main": {
+          "path": "components/radio/index.tsx",
+          "type": "component"
         }
       }
     },
     "typography": {
-      "name":"Typography",
-      "description":"A Typography component for consistent text styling with various variants, sizes, weights, and colors.",
-      "dependencies":[
-        "@radix-ui/react-slot",
-        "class-variance-authority"
-      ],
-      "files":{
-        "main":{
-          "path":"components/typography/index.tsx",
-          "type":"component"
+      "name": "Typography",
+      "description": "A Typography component for consistent text styling with various variants, sizes, weights, and colors.",
+      "dependencies": ["@radix-ui/react-slot", "class-variance-authority"],
+      "files": {
+        "main": {
+          "path": "components/typography/index.tsx",
+          "type": "component"
         }
       }
     },
@@ -540,7 +529,7 @@
         }
       }
     },
-     "singlecolumnlayout": {
+    "singlecolumnlayout": {
       "name": "SingleColumnLayout",
       "description": "A clean, responsive single-column layout with header, constrained content area, and footer. Supports multiple theme variants and animations.",
       "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
@@ -555,14 +544,8 @@
     "sidebarleftlayout": {
       "name": "SidebarLeftLayout",
       "description": "A flexible layout component with header, sidebar, and footer that supports responsive design and various configuration options.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "sidebar"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["sidebar"],
       "files": {
         "main": {
           "path": "templates/layouts/sidebar-left-layout/index.tsx",
@@ -573,14 +556,8 @@
     "sidebarrightlayout": {
       "name": "SidebarRightLayout",
       "description": "A flexible layout component with header, right sidebar, and footer that supports responsive design and various configuration options.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "sidebar"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["sidebar"],
       "files": {
         "main": {
           "path": "templates/layouts/sidebar-right-layout/index.tsx",
@@ -591,14 +568,8 @@
     "fullheightsidebarlayout": {
       "name": "FullHeightSidebarLayout",
       "description": "A flexible layout component with header, sidebar that supports app dashboard with responsive design.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "sidebar"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["sidebar"],
       "files": {
         "main": {
           "path": "templates/layouts/full-height-sidebar-layout/index.tsx",
@@ -621,11 +592,7 @@
     "threeColumnSidebar": {
       "name": "ThreeColumnSidebar",
       "description": "A flexible layout component with header, sidebar that supports app dashboard with responsive design.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
       "files": {
         "main": {
           "path": "components/threeColumnSidebar/index.tsx",
@@ -636,14 +603,8 @@
     "threecolumnsidebarlayout": {
       "name": "ThreeColumnSidebarLayout",
       "description": "A flexible layout component with header, sidebar that supports app dashboard with responsive design.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "threeColumnSidebar"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["threeColumnSidebar"],
       "files": {
         "main": {
           "path": "templates/layouts/three-column-sidebar-layout/index.tsx",
@@ -654,15 +615,8 @@
     "forgotPassword": {
       "name": "forgotPassword",
       "description": "A fully responsive and customizable Forgot Password component with an input field and submit button, built to support secure in-app password reset processes.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "input",
-        "button"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["input", "button"],
       "files": {
         "main": {
           "path": "templates/pages/forgot-password/index.tsx",
@@ -673,17 +627,11 @@
     "signin": {
       "name": "SignIn",
       "description": "A sign-in page template with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button","input"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "input"],
       "files": {
         "main": {
-          "path": "templates/pages/sign-in/index.tsx",
+          "path": "templates/pages/signin/index.tsx",
           "type": "template"
         }
       }
@@ -691,15 +639,8 @@
     "signup": {
       "name": "SignUp",
       "description": "A sign-up page template with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority",
-        "react-icons"
-      ],
-      "componentDependencies": [
-        "button","input"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority", "react-icons"],
+      "componentDependencies": ["button", "input"],
       "files": {
         "main": {
           "path": "templates/pages/sign-up/index.tsx",
@@ -710,10 +651,7 @@
     "avatar": {
       "name": "Avatar",
       "description": "An avatar component with image, icon, letters, and status indicator support, along with fallback handling and customizable sizes and shapes.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react"
-      ],
+      "dependencies": ["framer-motion", "lucide-react"],
       "files": {
         "main": {
           "path": "components/avatar/index.tsx",
@@ -724,33 +662,20 @@
     "otpVerification": {
       "name": "otpVerification",
       "description": "A fully responsive OTP (One-Time Password) verification component that provides configurable input length, animations, themes, auto-focus behavior, and paste-to-autofill support.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button"],
       "files": {
         "main": {
           "path": "templates/pages/otp-verification/index.tsx",
-          "type":"template"
+          "type": "template"
         }
       }
     },
     "resetPassword": {
       "name": "ResetPassword",
       "description": "A reset password page template with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react"
-      ],
-      "componentDependencies": [
-        "button",
-        "input",
-        "card"
-      ],
+      "dependencies": ["framer-motion", "lucide-react"],
+      "componentDependencies": ["button", "input", "card"],
       "files": {
         "main": {
           "path": "templates/pages/reset-password/index.tsx",
@@ -761,19 +686,8 @@
     "settingPage": {
       "name": "SettingsPage",
       "description": "A settings page template with responsive design and animation.",
-      "dependencies": [
-        "framer-motion",
-        "i18n",
-        "react-i18next"
-      ],
-      "componentDependencies": [
-        "dropdown",
-        "button",
-        "radio",
-        "typography",
-        "switch",
-        "dialogBox"
-      ],
+      "dependencies": ["framer-motion", "i18n", "react-i18next"],
+      "componentDependencies": ["dropdown", "button", "radio", "typography", "switch", "dialogBox"],
       "files": {
         "main": {
           "path": "templates/pages/setting-page/index.tsx",
@@ -788,14 +702,8 @@
     "twoFactorAuthSetup": {
       "name": "TwoFactorAuthSetup",
       "description": "A two-factor authentication setup page with QR code, manual entry, backup codes, and verification step.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react"
-      ],
-      "componentDependencies": [
-        "button",
-        "card"
-      ],
+      "dependencies": ["framer-motion", "lucide-react"],
+      "componentDependencies": ["button", "card"],
       "files": {
         "main": {
           "path": "templates/pages/two-factor-auth-setup/index.tsx",
@@ -803,18 +711,11 @@
         }
       }
     },
-    "profile":{
+    "profile": {
       "name": "Profile",
       "description": "A profile page template with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react", "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button","avatar",
-        "input",
-        "typography"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "avatar", "input", "typography"],
       "files": {
         "main": {
           "path": "templates/pages/profile/index.tsx",
@@ -822,42 +723,23 @@
         }
       }
     },
-    "pricingGrid":{
+    "pricingGrid": {
       "name": "PricingGrid",
       "description": "A pricing grid template with responsive design.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button",
-        "switch",
-        "card"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "switch", "card"],
       "files": {
         "main": {
           "path": "templates/sections/pricing-grid/index.tsx",
-          "type" : "template"
+          "type": "template"
         }
       }
     },
     "securityPage": {
       "name": "SecurityPage",
       "description": "A comprehensive account security page with password change, active sessions, logout-all, two-factor authentication toggle with recovery codes, and login activity, available in both grid and collapsible list layouts.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react",
-        "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "input",
-        "switch",
-        "table",
-        "accordion",
-        "card",
-        "pagination"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["input", "switch", "table", "accordion", "card", "pagination"],
       "files": {
         "main": {
           "path": "templates/pages/security/index.tsx",
@@ -865,18 +747,11 @@
         }
       }
     },
-    "api-keys":{
+    "api-keys": {
       "name": "api-keys",
       "description": "A page for managing API keys with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react", "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button",
-        "input",
-        "typography", "checkbox"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "input", "typography", "checkbox"],
       "files": {
         "main": {
           "path": "templates/pages/api-keys/index.tsx",
@@ -884,36 +759,48 @@
         }
       }
     },
-    "fileUpload":{
-      "name": "fileUpload",
+    "fileUpload": {
+      "name": "FileUpload",
       "description": "A file uploader component with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react", "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button",
-        "avatar",
-        "typography"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "avatar", "typography"],
       "files": {
         "main": {
           "path": "components/file-upload/index.tsx",
           "type": "component"
+        },
+        "hook": {
+          "path": "components/file-upload/hooks/use-file-upload.ts",
+          "type": "hook"
+        },
+        "utils": {
+          "path": "components/file-upload/utils.ts",
+          "type": "utils"
+        },
+        "types": {
+          "path": "components/file-upload/types.ts",
+          "type": "types"
+        },
+        "constants": {
+          "path": "components/file-upload/constants.ts",
+          "type": "constants"
+        },
+        "component": {
+          "path": [
+            "components/file-upload/components/DropZone.tsx",
+            "components/file-upload/components/FileList.tsx",
+            "components/file-upload/components/UploadButton.tsx",
+            "components/file-upload/components/validationErrors.tsx"
+          ],
+          "type": "component"
         }
       }
-    }, 
-    "datePicker":{
+    },
+    "datePicker": {
       "name": "datePicker",
       "description": "A date picker component with responsive design and form validation.",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react", "class-variance-authority"
-      ],
-      "componentDependencies": [
-        "button",
-        "typography"
-      ],
+      "dependencies": ["framer-motion", "lucide-react", "class-variance-authority"],
+      "componentDependencies": ["button", "typography"],
       "files": {
         "main": {
           "path": "components/date-picker/index.tsx",
@@ -921,5 +808,5 @@
         }
       }
     }
-  } 
+  }
 }

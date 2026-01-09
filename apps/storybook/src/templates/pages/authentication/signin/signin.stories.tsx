@@ -1,7 +1,8 @@
 // signin/signin-form.stories.tsx
 
 import React from "react";
-import { SignIn, type SocialProvider } from "./";
+import { type SocialProvider } from "./types";
+import { SignIn } from "./";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Users, Zap, Globe, BarChart, Award, Shield } from "lucide-react";
 
@@ -136,33 +137,6 @@ export const DarkCentered: Story = {
     },
 };
 
-// ============================================================================
-// SPLIT LAYOUTS WITH CUSTOMIZABLE BACKGROUNDS AND BUTTONS
-// ============================================================================
-
-// 🎯 Split Layout - Default with Custom Button
-// export const DefaultSplit: Story = {
-//     name: "Split Layout - Default",
-//     parameters: {
-//         description: "Split layout with default background and custom purple button",
-//     },
-//     args: {
-//         type: "split",
-//         variant: "default",
-//         companyName: "YourBrand",
-//         loading: false,
-//         error: "",
-//         showSocialLogin: true,
-//         showForgotPassword: true,
-//         showSignUpLink: true,
-//         // buttonStyle: {
-//         //     gradient: "bg-gradient-to-r from-purple-600 to-purple-700",
-//         //     hoverGradient: "hover:from-purple-700 hover:to-purple-800",
-//         //     shadow: "shadow-lg shadow-purple-200",
-//         //     hoverShadow: "hover:shadow-xl hover:shadow-purple-300",
-//         // },
-//     },
-// };
 
 // 🌙 Split Layout - Dark Version (Original)
 export const DarkSplit: Story = {
@@ -363,12 +337,6 @@ export const ImageBackgroundSplit: Story = {
             companyNameColor: "text-blue-300",
             descriptionColor: "text-gray-200",
         },
-        // buttonStyle: {
-        //     gradient: "bg-gradient-to-r from-blue-500 to-teal-500",
-        //     hoverGradient: "hover:from-blue-600 hover:to-teal-600",
-        //     shadow: "shadow-lg shadow-blue-200",
-        //     hoverShadow: "hover:shadow-xl hover:shadow-teal-300",
-        // },
     },
 };
 
@@ -455,20 +423,19 @@ export const WithErrorState: Story = {
 export const InteractiveSocialLogin: Story = {
     name: "Interactive Social Login",
     render: function Render(args) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [socialLoading, setSocialLoading] = React.useState<SocialProvider | null>(null);
 
         const handleSocialLogin = (provider: SocialProvider) => {
             setSocialLoading(provider);
             setTimeout(() => {
                 setSocialLoading(null);
-                console.log(`${provider} sign-in completed`);
             }, 2000);
         };
 
         return (
             <SignIn
                 {...args}
+                loading={args.loading || socialLoading !== null}
                 onGoogleSignIn={() => handleSocialLogin('google')}
                 onGitHubSignIn={() => handleSocialLogin('github')}
                 onMicrosoftSignIn={() => handleSocialLogin('microsoft')}
@@ -624,11 +591,6 @@ export const WithTestimonials: Story = {
                     author: "Sarah Chen",
                     role: "CTO, TechCorp",
                 },
-                // {
-                //     quote: "The security features give us peace of mind while the intuitive interface makes onboarding a breeze.",
-                //     author: "Marcus Johnson",
-                //     role: "Security Lead, FinancePro",
-                // },
 
             ],
             footerText: "Join companies that trust us with their most important work.",

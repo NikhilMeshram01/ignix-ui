@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { SignIn, type SignInFormData } from '@site/src/components/UI/sign-in';
+import { type SignInFormData } from '@site/src/components/UI/signin/types';
+import { SignIn, } from '@site/src/components/UI/signin';
 import VariantSelector from './VariantSelector';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
