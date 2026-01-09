@@ -766,7 +766,7 @@
       "componentDependencies": ["button", "avatar", "typography"],
       "files": {
         "main": {
-          "path": "components/file-upload/index.tsx",
+          "path": "components/file-upload",
           "type": "component"
         },
         "hook": {
