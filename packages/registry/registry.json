@@ -773,13 +773,13 @@
           "path": "components/file-upload/useFileUpload.ts",
           "type": "hook"
         },
-        "utils": {
-          "path": "components/file-upload/utils.ts",
-          "type": "utils"
-        },
         "types": {
           "path": "components/file-upload/types.ts",
           "type": "types"
+        },
+        "utils": {
+          "path": "components/file-upload/utils.ts",
+          "type": "utils"
         },
         "constants": {
           "path": "components/file-upload/constants.ts",
