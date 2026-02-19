@@ -102,6 +102,10 @@ export const addCommand = new Command()
           }
         }
 
+        if (!json) {
+          console.log(`Installed ${selectedItems.map((i) => i.name).join(', ')}`);
+        }
+
         // FINAL JSON OUTPUT (ONLY HERE)
         if (json) {
           console.log(
@@ -146,6 +150,10 @@ export const addCommand = new Command()
           await themeService.install(id.toLowerCase());
         }
 
+        if (!json) {
+          console.log(`Installed ${identifiers.join(', ')}`);
+        }
+
         if (json) {
           console.log(JSON.stringify({ success: true, installed: identifiers }));
         }
@@ -182,6 +190,10 @@ export const addCommand = new Command()
         for (const id of identifiers) {
           if (!json) console.log(`Installing template ${id}`);
           await templateService.install(id.toLowerCase());
+        }
+
+        if (!json) {
+          console.log(`Installed ${identifiers.join(', ')}`);
         }
 
         if (json) {
