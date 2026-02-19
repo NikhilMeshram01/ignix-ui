@@ -1,0 +1,52 @@
+# Ignix UI - React Component Library
+
+## Project Description
+Ignix UI is a CLI-based React component library built on the copy-paste ownership model (similar to shadcn/ui). Components are installed directly into a user's project, giving full control to customize and modify them.
+
+Ignix UI is designed to be deterministic and AI-friendly.
+
+## Framework & Styling
+- Framework: React 18+
+- Styling: Tailwind CSS
+- Language: TypeScript
+- Installation Model: Copy-paste ownership
+
+## CLI Usage
+
+Initialize Ignix in a project:
+
+npx ignix init
+
+Add a component interactively:
+
+npx ignix
+
+Add a component directly:
+
+npx ignix add component <component-name>
+
+Zero-interaction mode (for AI agents):
+
+npx ignix add component <component-name> --yes
+
+Example:
+
+npx ignix add component button --yes
+
+## Deterministic Output
+
+When --yes is provided, the CLI produces predictable logs:
+
+Installing button
+Created src/components/ui/button/index.tsx
+Installed button
+
+No interactive prompts are shown in this mode.
+
+## Component Registry
+
+Machine-readable registry location:
+
+packages/registry/registry.json
+
+This file contains all available components, templates, dependencies, and file paths.
