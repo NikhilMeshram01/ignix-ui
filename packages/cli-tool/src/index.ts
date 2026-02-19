@@ -42,7 +42,12 @@ ${chalk.hex('#FFD5D5').bold('  ╚═╝ ╚═════╝ ╚═╝  ╚═
 
 // Interactive CLI Mode
 async function startInteractiveCLI(): Promise<void> {
-  if (!process.argv.includes('--yes')) {
+  const args = process.argv;
+  const hasYes = args.includes('--yes');
+  const hasSilent = args.includes('--silent');
+  const hasJson = args.includes('--json');
+
+  if (!hasYes && !hasSilent && !hasJson) {
     showWelcome();
   }
 
@@ -79,7 +84,7 @@ async function startInteractiveCLI(): Promise<void> {
         }
         case 'add': {
           // Show interactive component selection
-          const registryService = new RegistryService();
+          const registryService = new RegistryService({ silent: false, json: false });
           const availableComponents = await registryService.getAvailableComponents();
 
           if (availableComponents.length === 0) {
@@ -155,15 +160,28 @@ async function startInteractiveCLI(): Promise<void> {
   }
 }
 
-// Check if running in interactive mode or with arguments
-if (process.argv.length <= 2) {
-  // No arguments provided - start interactive mode
+// --------------------------------------------------
+// CLI Entry Logic
+// --------------------------------------------------
+const args = process.argv;
+
+const hasYes = args.includes('--yes');
+const hasSilent = args.includes('--silent');
+const hasJson = args.includes('--json');
+
+const nonInteractive = hasYes || hasSilent || hasJson;
+
+// No args → interactive menu
+if (args.length <= 2) {
   startInteractiveCLI().catch((error) => {
     console.error(chalk.red('Fatal error:'), error);
     process.exit(1);
   });
 } else {
-  // Arguments provided - run as normal CLI
-  showWelcome();
+  // Only show banner for human mode
+  if (!nonInteractive) {
+    showWelcome();
+  }
+
   program.parse();
 }
