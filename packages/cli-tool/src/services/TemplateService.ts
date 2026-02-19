@@ -20,6 +20,11 @@ export class TemplateService {
     this.silent = options?.silent ?? false;
     this.json = options?.json ?? false;
 
+    this.registryService = new RegistryService({
+      silent: this.silent,
+      json: this.json,
+    });
+
     this.dependencyService = new DependencyService({
       silent: this.silent,
       json: this.json,
