@@ -67,19 +67,19 @@ export class TemplateService {
 
       spinner && spinner.succeed(chalk.green(`Template installed: ${chalk.cyan(name)}`));
 
-      if (this.json) {
-        console.log(JSON.stringify({ template: name, status: 'installed' }));
-      }
+      // if (this.json) {
+      //   console.log(JSON.stringify({ template: name, status: 'installed' }));
+      // }
     } catch (error) {
       spinner && spinner.fail(`Failed installing template`);
 
       const message = error instanceof Error ? error.message : 'Template install failed';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       process.exit(1);
     }

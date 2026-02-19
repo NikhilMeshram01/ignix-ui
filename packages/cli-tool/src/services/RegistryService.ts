@@ -58,12 +58,12 @@ export class RegistryService {
       spinner && spinner.fail('Registry fetch failed');
 
       const message = error instanceof Error ? error.message : 'Could not fetch component registry';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       process.exit(1);
     }

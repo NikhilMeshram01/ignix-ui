@@ -31,9 +31,9 @@ export const addCommand = new Command()
     };
 
     switch (namespace) {
-      // =========================================================
+      // =====================================================
       // COMPONENTS
-      // =========================================================
+      // =====================================================
       case 'component':
       case 'components': {
         const componentService = new ComponentService({ silent, json });
@@ -46,7 +46,7 @@ export const addCommand = new Command()
         type Selected = { name: string; type: string };
         let selectedItems: Selected[] = [];
 
-        // interactive
+        // ---------------- INTERACTIVE ----------------
         if (identifiers.length === 0 && !options.yes) {
           const response = await prompts({
             type: 'select',
@@ -65,10 +65,10 @@ export const addCommand = new Command()
           selectedItems = [response.component];
         }
 
-        // direct CLI usage
+        // ---------------- DIRECT MODE ----------------
         else {
-          if (identifiers.length === 0 && options.yes) {
-            exitWithError('No component specified in --yes mode');
+          if (identifiers.length === 0) {
+            exitWithError('No component specified');
           }
 
           const normalized = identifiers.map((i) => i.toLowerCase());
@@ -90,7 +90,10 @@ export const addCommand = new Command()
         }
 
         for (const item of selectedItems) {
-          if (!silent && !json) console.log(`Installing ${item.name}`);
+          // Show minimal log in --yes mode
+          if (!json) {
+            console.log(`Installing ${item.name}`);
+          }
 
           if (item.type === 'component') {
             await componentService.install(item.name);
@@ -99,6 +102,7 @@ export const addCommand = new Command()
           }
         }
 
+        // FINAL JSON OUTPUT (ONLY HERE)
         if (json) {
           console.log(
             JSON.stringify({
@@ -111,9 +115,9 @@ export const addCommand = new Command()
         break;
       }
 
-      // =========================================================
+      // =====================================================
       // THEMES
-      // =========================================================
+      // =====================================================
       case 'theme':
       case 'themes': {
         const themeService = new ThemeService({ silent, json });
@@ -138,6 +142,7 @@ export const addCommand = new Command()
         }
 
         for (const id of identifiers) {
+          if (!json) console.log(`Installing theme ${id}`);
           await themeService.install(id.toLowerCase());
         }
 
@@ -148,9 +153,9 @@ export const addCommand = new Command()
         break;
       }
 
-      // =========================================================
+      // =====================================================
       // TEMPLATES
-      // =========================================================
+      // =====================================================
       case 'template':
       case 'templates': {
         const templateService = new TemplateService({ silent, json });
@@ -175,6 +180,7 @@ export const addCommand = new Command()
         }
 
         for (const id of identifiers) {
+          if (!json) console.log(`Installing template ${id}`);
           await templateService.install(id.toLowerCase());
         }
 

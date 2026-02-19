@@ -50,12 +50,12 @@ export class ThemeService {
       spinner && spinner.fail('Failed to fetch themes');
 
       const message = error instanceof Error ? error.message : 'Could not fetch themes';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       process.exit(1);
     }
@@ -108,19 +108,19 @@ export class ThemeService {
 
       spinner && spinner.succeed(chalk.green(`Installed theme: ${chalk.cyan(id)}`));
 
-      if (this.json) {
-        console.log(JSON.stringify({ theme: id, status: 'installed' }));
-      }
+      // if (this.json) {
+      //   console.log(JSON.stringify({ theme: id, status: 'installed' }));
+      // }
     } catch (error) {
       spinner && spinner.fail(`Failed installing theme`);
 
       const message = error instanceof Error ? error.message : 'Theme install failed';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       process.exit(1);
     }

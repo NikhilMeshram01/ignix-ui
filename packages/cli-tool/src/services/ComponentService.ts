@@ -81,19 +81,19 @@ export class ComponentService {
         logger.info(`Files written → ${chalk.yellow(componentDir)}`);
       }
 
-      if (this.json) {
-        console.log(JSON.stringify({ component: name, status: 'installed' }));
-      }
+      // if (this.json) {
+      //   console.log(JSON.stringify({ component: name, status: 'installed' }));
+      // }
     } catch (error) {
       spinner && spinner.fail(`Failed installing ${name}`);
 
       const message = error instanceof Error ? error.message : 'Install failed';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       process.exit(1);
     }

@@ -46,17 +46,17 @@ export class DependencyService {
         logger.success(`Installed: ${packages.join(', ')}`);
       }
 
-      if (this.json) {
-        console.log(JSON.stringify({ success: true, dependenciesInstalled: packages }));
-      }
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: true, dependenciesInstalled: packages }));
+      // }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Dependency install failed';
-
-      if (this.json) {
-        console.log(JSON.stringify({ success: false, error: message }));
-      } else {
-        logger.error(message);
-      }
+      logger.error(message);
+      // if (this.json) {
+      //   console.log(JSON.stringify({ success: false, error: message }));
+      // } else {
+      //   logger.error(message);
+      // }
 
       throw new Error(`Failed to install dependencies: ${packages.join(', ')}`);
     }
