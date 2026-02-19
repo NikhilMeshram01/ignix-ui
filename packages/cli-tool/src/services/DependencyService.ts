@@ -5,15 +5,18 @@ import { execa } from 'execa';
 interface ServiceOptions {
   silent?: boolean;
   json?: boolean;
+  cwd?: string;
 }
 
 export class DependencyService {
   private silent: boolean;
   private json: boolean;
+  private cwd: string;
 
   constructor(options?: ServiceOptions) {
     this.silent = options?.silent ?? false;
     this.json = options?.json ?? false;
+    this.cwd = options?.cwd ?? process.cwd();
   }
 
   public async install(packages: string[], isDev: boolean): Promise<void> {
@@ -25,6 +28,7 @@ export class DependencyService {
     if (packageManager === 'npm') {
       args.push('install');
       if (isDev) args.push('--save-dev');
+      args.push('--no-audit', '--no-fund');
     } else {
       args.push('add');
       if (isDev) args.push('-D');
@@ -39,24 +43,20 @@ export class DependencyService {
 
       await execa(packageManager, args, {
         stdio: this.silent || this.json ? 'pipe' : 'inherit',
-        cwd: process.cwd(),
+        cwd: this.cwd,
       });
 
       if (!this.silent && !this.json) {
         logger.success(`Installed: ${packages.join(', ')}`);
       }
-
-      // if (this.json) {
-      //   console.log(JSON.stringify({ success: true, dependenciesInstalled: packages }));
-      // }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Dependency install failed';
-      logger.error(message);
-      // if (this.json) {
-      //   console.log(JSON.stringify({ success: false, error: message }));
-      // } else {
-      //   logger.error(message);
-      // }
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
 
       throw new Error(`Failed to install dependencies: ${packages.join(', ')}`);
     }

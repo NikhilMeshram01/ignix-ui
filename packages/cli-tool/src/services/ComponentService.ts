@@ -11,27 +11,37 @@ import { DependencyService } from './DependencyService';
 interface ServiceOptions {
   silent?: boolean;
   json?: boolean;
+  cwd?: string;
 }
 
 export class ComponentService {
-  private registryService = new RegistryService();
+  private registryService: RegistryService;
   private dependencyService: DependencyService;
-  private config = loadConfig();
+
   private silent: boolean;
   private json: boolean;
+  private cwd: string;
+
+  private configPromise: ReturnType<typeof loadConfig>;
 
   constructor(options?: ServiceOptions) {
     this.silent = options?.silent ?? false;
     this.json = options?.json ?? false;
+    this.cwd = options?.cwd ?? process.cwd();
+
+    // Load config relative to cwd
+    this.configPromise = loadConfig(this.cwd);
 
     this.registryService = new RegistryService({
       silent: this.silent,
       json: this.json,
+      cwd: this.cwd,
     });
 
     this.dependencyService = new DependencyService({
       silent: this.silent,
       json: this.json,
+      cwd: this.cwd,
     });
   }
 
@@ -40,18 +50,26 @@ export class ComponentService {
       !this.silent && !this.json ? ora(`Installing component: ${name}...`).start() : null;
 
     try {
-      const config = await this.config;
+      const config = await this.configPromise;
+
       const componentConfig = await this.registryService.getComponentConfig(name);
 
       if (!componentConfig) {
         throw new Error(`Component '${name}' not found.`);
       }
 
+      // ================================
+      // Install NPM dependencies
+      // ================================
       if (componentConfig.dependencies?.length) {
         spinner && (spinner.text = `Installing dependencies...`);
+
         await this.dependencyService.install(componentConfig.dependencies, false);
       }
 
+      // ================================
+      // Install component dependencies
+      // ================================
       if (componentConfig.componentDependencies?.length) {
         for (const dep of componentConfig.componentDependencies) {
           await this.install(dep);
@@ -62,7 +80,8 @@ export class ComponentService {
 
       const baseUrl = config.registryUrl.substring(0, config.registryUrl.lastIndexOf('/'));
 
-      const componentsDir = path.resolve(config.componentsDir);
+      // Resolve components directory relative to cwd
+      const componentsDir = path.resolve(this.cwd, config.componentsDir);
       const componentDir = path.join(componentsDir, name.toLowerCase());
 
       await fs.ensureDir(componentDir);
@@ -85,20 +104,18 @@ export class ComponentService {
         spinner.succeed(chalk.green(`Installed component: ${chalk.cyan(name)}`));
         logger.info(`Files written → ${chalk.yellow(componentDir)}`);
       }
-
-      // if (this.json) {
-      //   console.log(JSON.stringify({ component: name, status: 'installed' }));
-      // }
     } catch (error) {
       spinner && spinner.fail(`Failed installing ${name}`);
 
       const message = error instanceof Error ? error.message : 'Install failed';
-      logger.error(message);
-      // if (this.json) {
-      //   console.log(JSON.stringify({ success: false, error: message }));
-      // } else {
-      //   logger.error(message);
-      // }
+
+      if (!this.json) {
+        logger.error(message);
+      }
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      }
 
       process.exit(1);
     }

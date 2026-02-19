@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import chalk from 'chalk';
 import { ThemeService } from '../services/ThemeService';
 import { TemplateService } from '../services/TemplateService';
+import path from 'path';
 
 export const addCommand = new Command()
   .name('add')
@@ -15,11 +16,13 @@ export const addCommand = new Command()
   .option('-y, --yes', 'Skip prompts')
   .option('-s, --silent', 'Silent mode')
   .option('--json', 'Machine output')
+  .option('--cwd <path>', 'Working directory', '.')
   .action(async (namespace: string, identifiers: string[] = [], options) => {
     const silent = options.yes || options.silent;
     const json = options.json;
+    const cwd = path.resolve(options.cwd || process.cwd());
 
-    const registryService = new RegistryService({ silent, json });
+    const registryService = new RegistryService({ silent, json, cwd });
 
     const exitWithError = (message: string): never => {
       if (json) {
@@ -36,8 +39,8 @@ export const addCommand = new Command()
       // =====================================================
       case 'component':
       case 'components': {
-        const componentService = new ComponentService({ silent, json });
-        const templateService = new TemplateService({ silent, json });
+        const componentService = new ComponentService({ silent, json, cwd });
+        const templateService = new TemplateService({ silent, json, cwd });
 
         if (!silent && !json) logger.info('Adding components...');
 
@@ -124,7 +127,7 @@ export const addCommand = new Command()
       // =====================================================
       case 'theme':
       case 'themes': {
-        const themeService = new ThemeService({ silent, json });
+        const themeService = new ThemeService({ silent, json, cwd });
         const availableThemes = await themeService.getAvailableThemes();
 
         if (identifiers.length === 0 && !options.yes) {
@@ -166,7 +169,7 @@ export const addCommand = new Command()
       // =====================================================
       case 'template':
       case 'templates': {
-        const templateService = new TemplateService({ silent, json });
+        const templateService = new TemplateService({ silent, json, cwd });
         const availableTemplates = await registryService.getAvailableTemplates();
 
         if (identifiers.length === 0 && !options.yes) {

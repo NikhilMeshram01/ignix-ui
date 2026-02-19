@@ -9,25 +9,37 @@ import { logger } from '../utils/logger';
 import { DependencyService } from './DependencyService';
 import { ComponentService } from './ComponentService';
 
+interface Options {
+  silent?: boolean;
+  json?: boolean;
+  cwd?: string;
+}
+
 export class TemplateService {
-  private registryService = new RegistryService();
+  private registryService: RegistryService;
   private dependencyService: DependencyService;
   private silent: boolean;
   private json: boolean;
-  private config = loadConfig();
+  private cwd: string;
+  private configPromise: ReturnType<typeof loadConfig>;
 
-  constructor(options?: { silent?: boolean; json?: boolean }) {
+  constructor(options?: Options) {
     this.silent = options?.silent ?? false;
     this.json = options?.json ?? false;
+    this.cwd = options?.cwd ?? process.cwd();
+
+    this.configPromise = loadConfig(this.cwd);
 
     this.registryService = new RegistryService({
       silent: this.silent,
       json: this.json,
+      cwd: this.cwd,
     });
 
     this.dependencyService = new DependencyService({
       silent: this.silent,
       json: this.json,
+      cwd: this.cwd,
     });
   }
 
@@ -36,7 +48,8 @@ export class TemplateService {
       !this.silent && !this.json ? ora(`Installing template: ${name}...`).start() : null;
 
     try {
-      const config = await this.config;
+      const config = await this.configPromise;
+
       const templateConfig = await this.registryService.getComponentConfig(name);
 
       if (!templateConfig) throw new Error(`Template '${name}' not found.`);
@@ -50,12 +63,13 @@ export class TemplateService {
           const compService = new ComponentService({
             silent: this.silent,
             json: this.json,
+            cwd: this.cwd,
           });
           await compService.install(dep);
         }
       }
 
-      const templateDir = path.resolve(config.templateDir, name);
+      const templateDir = path.resolve(this.cwd, config.templateDir, name);
       await fs.ensureDir(templateDir);
 
       const baseUrl = config.registryUrl.substring(0, config.registryUrl.lastIndexOf('/'));
@@ -71,20 +85,16 @@ export class TemplateService {
       }
 
       spinner && spinner.succeed(chalk.green(`Template installed: ${chalk.cyan(name)}`));
-
-      // if (this.json) {
-      //   console.log(JSON.stringify({ template: name, status: 'installed' }));
-      // }
     } catch (error) {
       spinner && spinner.fail(`Failed installing template`);
 
       const message = error instanceof Error ? error.message : 'Template install failed';
-      logger.error(message);
-      // if (this.json) {
-      //   console.log(JSON.stringify({ success: false, error: message }));
-      // } else {
-      //   logger.error(message);
-      // }
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
 
       process.exit(1);
     }

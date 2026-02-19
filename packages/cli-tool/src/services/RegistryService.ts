@@ -24,25 +24,25 @@ interface ComponentRegistry {
 interface ServiceOptions {
   silent?: boolean;
   json?: boolean;
+  cwd?: string;
 }
 
 export class RegistryService {
   private componentRegistry: ComponentRegistry | null = null;
   private silent: boolean;
   private json: boolean;
+  private cwd: string;
 
   constructor(options?: ServiceOptions) {
     this.silent = options?.silent ?? false;
     this.json = options?.json ?? false;
+    this.cwd = options?.cwd ?? process.cwd();
   }
 
-  //------------------------------------------------------------
-  // Fetch component registry
-  //------------------------------------------------------------
   private async fetchRegistry(): Promise<ComponentRegistry> {
     if (this.componentRegistry) return this.componentRegistry;
 
-    const config = await loadConfig();
+    const config = await loadConfig(this.cwd);
 
     const spinner =
       !this.silent && !this.json ? ora('Fetching component registry...').start() : null;
@@ -58,20 +58,17 @@ export class RegistryService {
       spinner && spinner.fail('Registry fetch failed');
 
       const message = error instanceof Error ? error.message : 'Could not fetch component registry';
-      logger.error(message);
-      // if (this.json) {
-      //   console.log(JSON.stringify({ success: false, error: message }));
-      // } else {
-      //   logger.error(message);
-      // }
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
 
       process.exit(1);
     }
   }
 
-  //------------------------------------------------------------
-  // GET component config
-  //------------------------------------------------------------
   public async getComponentConfig(name: string): Promise<ComponentConfig | undefined> {
     const registry = await this.fetchRegistry();
 
@@ -80,17 +77,11 @@ export class RegistryService {
     );
   }
 
-  //------------------------------------------------------------
-  // LIST components
-  //------------------------------------------------------------
   public async getAvailableComponents(): Promise<ComponentConfig[]> {
     const registry = await this.fetchRegistry();
     return Object.values(registry.components);
   }
 
-  //------------------------------------------------------------
-  // Templates (if using same registry structure)
-  //------------------------------------------------------------
   public async getAvailableTemplates(): Promise<ComponentConfig[]> {
     const registry = await this.fetchRegistry();
     return Object.values(registry.components);
