@@ -42,7 +42,9 @@ ${chalk.hex('#FFD5D5').bold('  ╚═╝ ╚═════╝ ╚═╝  ╚═
 
 // Interactive CLI Mode
 async function startInteractiveCLI(): Promise<void> {
-  showWelcome();
+  if (!process.argv.includes('--yes')) {
+    showWelcome();
+  }
 
   // eslint-disable-next-line no-constant-condition
   while (true) {

@@ -9,151 +9,183 @@ import { TemplateService } from '../services/TemplateService';
 
 export const addCommand = new Command()
   .name('add')
-  .description(chalk.hex('#FF8C00')('Add components, or tokens to your project.'))
-  .argument('<namespace>', chalk.green('The type of asset to add (e.g., component, theme)'))
-  .argument('[identifiers...]', 'The names/IDs of the assets to add')
-  .action(async (namespace, identifiers) => {
-    const registryService = new RegistryService();
+  .description(chalk.hex('#FF8C00')('Add components, themes, or templates'))
+  .argument('<namespace>')
+  .argument('[identifiers...]')
+  .option('-y, --yes', 'Skip prompts')
+  .option('-s, --silent', 'Silent mode')
+  .option('--json', 'Machine output')
+  .action(async (namespace: string, identifiers: string[] = [], options) => {
+    const silent = options.yes || options.silent;
+    const json = options.json;
+
+    const registryService = new RegistryService({ silent, json });
+
+    const exitWithError = (message: string): never => {
+      if (json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+      process.exit(1);
+    };
 
     switch (namespace) {
+      // =========================================================
+      // COMPONENTS
+      // =========================================================
       case 'component':
       case 'components': {
-        const componentService = new ComponentService();
-        const templateService = new TemplateService();
-        logger.info('Adding components...');
+        const componentService = new ComponentService({ silent, json });
+        const templateService = new TemplateService({ silent, json });
+
+        if (!silent && !json) logger.info('Adding components...');
+
         const availableComponents = await registryService.getAvailableComponents();
 
-        type SelectedComponent = {
-          name: string;
-          type: string;
-        };
+        type Selected = { name: string; type: string };
+        let selectedItems: Selected[] = [];
 
-        let selectedItems: SelectedComponent[] = [];
-
-        if (identifiers.length === 0) {
-          const installResponse = await prompts({
+        // interactive
+        if (identifiers.length === 0 && !options.yes) {
+          const response = await prompts({
             type: 'select',
             name: 'component',
-            message: chalk.green('Select a component to add:'),
+            message: chalk.green('Select component'),
             choices: availableComponents.map((c) => ({
               title: c.name,
               value: {
-                name: c.name.toLowerCase(),
+                name: (c.id || c.name).toLowerCase(),
                 type: c.files.main.type,
               },
             })),
           });
 
-          if (installResponse.component) {
-            selectedItems = [installResponse.component];
+          if (!response.component) return;
+          selectedItems = [response.component];
+        }
+
+        // direct CLI usage
+        else {
+          if (identifiers.length === 0 && options.yes) {
+            exitWithError('No component specified in --yes mode');
           }
-        } else {
-          // If identifiers were passed directly from CLI args
-          const normalized = identifiers.map((i: string) => i.toLowerCase());
+
+          const normalized = identifiers.map((i) => i.toLowerCase());
+
           selectedItems = availableComponents
             .filter((c) => {
-              const name = c.name?.toLowerCase();
+              const name = c.name.toLowerCase();
               const id = c.id?.toLowerCase();
-              return normalized.includes(name) || normalized.includes(id);
+              return normalized.includes(name) || normalized.includes(id ?? '');
             })
             .map((c) => ({
               name: (c.id || c.name).toLowerCase(),
               type: c.files.main.type,
             }));
         }
-        if (!selectedItems || selectedItems.length === 0) {
-          logger.warn('No component selected. Exiting.');
-          return;
+
+        if (selectedItems.length === 0) {
+          exitWithError('No matching component found');
         }
 
         for (const item of selectedItems) {
-          console.log('Installing:', item.name, 'Type:', item.type);
+          if (!silent && !json) console.log(`Installing ${item.name}`);
 
           if (item.type === 'component') {
             await componentService.install(item.name);
           } else if (item.type === 'template') {
             await templateService.install(item.name);
-          } else {
-            logger.error(`Unknown type '${item.type}' for '${item.name}'`);
           }
+        }
+
+        if (json) {
+          console.log(
+            JSON.stringify({
+              success: true,
+              installed: selectedItems.map((i) => i.name),
+            })
+          );
         }
 
         break;
       }
 
+      // =========================================================
+      // THEMES
+      // =========================================================
       case 'theme':
       case 'themes': {
-        const themeService = new ThemeService();
+        const themeService = new ThemeService({ silent, json });
         const availableThemes = await themeService.getAvailableThemes();
-        const themeIds = availableThemes.map((t) => t.id.toLowerCase());
 
-        if (identifiers.length === 0) {
+        if (identifiers.length === 0 && !options.yes) {
           const response = await prompts({
             type: 'multiselect',
             name: 'themes',
-            message: chalk.green('Select themes to install:'),
+            message: 'Select themes',
             choices: availableThemes.map((t) => ({
               title: t.name,
-              value: t.id.toLowerCase(),
+              value: t.id,
             })),
           });
+
           identifiers = response.themes || [];
         }
 
-        if (!identifiers || identifiers.length === 0) {
-          logger.warn('No themes selected. Exiting.');
-          return;
+        if (identifiers.length === 0) {
+          exitWithError('No theme specified');
         }
 
         for (const id of identifiers) {
-          if (themeIds.includes(id.toLowerCase())) {
-            await themeService.install(id.toLowerCase());
-          } else {
-            logger.error(`Theme '${id}' not found in the registry.`);
-          }
+          await themeService.install(id.toLowerCase());
         }
+
+        if (json) {
+          console.log(JSON.stringify({ success: true, installed: identifiers }));
+        }
+
         break;
       }
+
+      // =========================================================
+      // TEMPLATES
+      // =========================================================
       case 'template':
       case 'templates': {
-        const registryService = new RegistryService();
-        const templateService = new TemplateService();
+        const templateService = new TemplateService({ silent, json });
+        const availableTemplates = await registryService.getAvailableTemplates();
 
-        logger.info('Adding components...');
-        const availabletemplates = await registryService.getAvailableTemplates();
-        const componentNames = availabletemplates.map((c) => c.id);
-
-        if (identifiers.length === 0) {
-          const installResponse = await prompts({
+        if (identifiers.length === 0 && !options.yes) {
+          const response = await prompts({
             type: 'select',
             name: 'template',
-            message: chalk.green('Select a template to add:'),
-            choices: availabletemplates.map((c) => ({
-              title: c.name,
-              value: c.id,
+            message: 'Select template',
+            choices: availableTemplates.map((t) => ({
+              title: t.name,
+              value: t.id,
             })),
           });
-          // Convert the single selected component to an array
-          identifiers = installResponse.template ? [installResponse.template] : [];
+
+          identifiers = response.template ? [response.template] : [];
         }
 
-        if (!identifiers || identifiers.length === 0) {
-          logger.warn('No template selected. Exiting.');
-          return;
+        if (identifiers.length === 0) {
+          exitWithError('No template specified');
         }
 
         for (const id of identifiers) {
-          if (componentNames.includes(id.toLowerCase())) {
-            await templateService.install(id.toLowerCase());
-          } else {
-            logger.error(`Component '${id}' not found in the registry.`);
-          }
+          await templateService.install(id.toLowerCase());
         }
+
+        if (json) {
+          console.log(JSON.stringify({ success: true, installed: identifiers }));
+        }
+
         break;
       }
 
       default:
-        logger.error(`Unknown namespace: '${namespace}'. Please use 'component' or 'theme'.`);
-        process.exit(1);
+        exitWithError(`Unknown namespace '${namespace}'`);
     }
   });

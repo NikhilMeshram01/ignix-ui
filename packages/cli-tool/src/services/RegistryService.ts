@@ -3,13 +3,12 @@ import ora from 'ora';
 import { loadConfig } from '../utils/config';
 import { logger } from '../utils/logger';
 
-// Define types based on your registry.json structure
 interface ComponentFile {
   path: string;
   type: string;
 }
 
-interface ComponentConfig {
+export interface ComponentConfig {
   id?: string;
   name: string;
   description: string;
@@ -22,65 +21,52 @@ interface ComponentRegistry {
   components: Record<string, ComponentConfig>;
 }
 
+interface ServiceOptions {
+  silent?: boolean;
+  json?: boolean;
+}
+
 export class RegistryService {
   private componentRegistry: ComponentRegistry | null = null;
+  private silent: boolean;
+  private json: boolean;
+
+  constructor(options?: ServiceOptions) {
+    this.silent = options?.silent ?? false;
+    this.json = options?.json ?? false;
+  }
 
   //------------------------------------------------------------
-  // Fetch Component Registry
+  // Fetch component registry
   //------------------------------------------------------------
   private async fetchRegistry(): Promise<ComponentRegistry> {
     if (this.componentRegistry) return this.componentRegistry;
 
     const config = await loadConfig();
-    const spinner = ora('Fetching registry...').start();
+
+    const spinner =
+      !this.silent && !this.json ? ora('Fetching component registry...').start() : null;
 
     try {
       const response = await axios.get<ComponentRegistry>(config.registryUrl);
-      spinner.succeed('Component registry fetched.');
+
+      spinner && spinner.succeed('Registry fetched');
+
       this.componentRegistry = response.data;
       return this.componentRegistry;
     } catch (error) {
-      spinner.fail('Failed to fetch registry.');
-      logger.error('Could not connect to the component registry. Please check your connection.');
+      spinner && spinner.fail('Registry fetch failed');
+
+      const message = error instanceof Error ? error.message : 'Could not fetch component registry';
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+
       process.exit(1);
     }
-  }
-
-  //------------------------------------------------------------
-  // Fetch Template Registry
-  //------------------------------------------------------------
-  private async fetchAvailableTemplate(): Promise<ComponentRegistry> {
-    if (this.componentRegistry) return this.componentRegistry;
-
-    const config = await loadConfig();
-    const spinner = ora('Fetching Template Layout...').start();
-
-    try {
-      const response = await axios.get<ComponentRegistry>(config.templateLayoutUrl);
-      spinner.succeed('Template layout fetched.');
-      this.componentRegistry = response.data;
-      return this.componentRegistry;
-    } catch (error) {
-      spinner.fail('Failed to fetch template layout.');
-      logger.error('Could not connect to the template registry. Please check your connection.');
-      process.exit(1);
-    }
-  }
-
-  //------------------------------------------------------------
-  // GET template config by name
-  //------------------------------------------------------------
-  public async getTemplateConfig(name: string): Promise<ComponentConfig | undefined> {
-    const registry = await this.fetchAvailableTemplate();
-    return registry.components[name];
-  }
-
-  //------------------------------------------------------------
-  // LIST: All templates
-  //------------------------------------------------------------
-  public async getAvailableTemplates(): Promise<ComponentConfig[]> {
-    const registry = await this.fetchAvailableTemplate();
-    return Object.values(registry.components);
   }
 
   //------------------------------------------------------------
@@ -88,15 +74,24 @@ export class RegistryService {
   //------------------------------------------------------------
   public async getComponentConfig(name: string): Promise<ComponentConfig | undefined> {
     const registry = await this.fetchRegistry();
+
     return Object.values(registry.components).find(
-      (component: any) => component.name.toLowerCase() === name.toLowerCase()
+      (c) => c.name.toLowerCase() === name.toLowerCase()
     );
   }
 
   //------------------------------------------------------------
-  // LIST: All components
+  // LIST components
   //------------------------------------------------------------
   public async getAvailableComponents(): Promise<ComponentConfig[]> {
+    const registry = await this.fetchRegistry();
+    return Object.values(registry.components);
+  }
+
+  //------------------------------------------------------------
+  // Templates (if using same registry structure)
+  //------------------------------------------------------------
+  public async getAvailableTemplates(): Promise<ComponentConfig[]> {
     const registry = await this.fetchRegistry();
     return Object.values(registry.components);
   }

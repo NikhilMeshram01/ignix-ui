@@ -11,72 +11,76 @@ import { ComponentService } from './ComponentService';
 
 export class TemplateService {
   private registryService = new RegistryService();
-  private dependencyService = new DependencyService();
-  private componentService = new ComponentService();
+  private dependencyService: DependencyService;
+  private silent: boolean;
+  private json: boolean;
   private config = loadConfig();
 
-  private async safeWriteFile(filePath: string, content: string) {
-    if (await fs.pathExists(filePath)) {
-      logger.warn(`Skipping existing file (template): ${filePath}`);
-      return;
-    }
-    await fs.writeFile(filePath, content);
+  constructor(options?: { silent?: boolean; json?: boolean }) {
+    this.silent = options?.silent ?? false;
+    this.json = options?.json ?? false;
+
+    this.dependencyService = new DependencyService({
+      silent: this.silent,
+      json: this.json,
+    });
   }
 
   public async install(name: string): Promise<void> {
-    const spinner = ora(`Installing template layout: ${name}...`).start();
+    const spinner =
+      !this.silent && !this.json ? ora(`Installing template: ${name}...`).start() : null;
 
     try {
       const config = await this.config;
       const templateConfig = await this.registryService.getComponentConfig(name);
-      if (!templateConfig) {
-        throw new Error(`Template '${name}' not found.`);
-      }
-      // 1. Install package dependencies
-      if (templateConfig.dependencies && templateConfig.dependencies?.length > 0) {
-        spinner.text = `Installing dependencies for ${name}...`;
+
+      if (!templateConfig) throw new Error(`Template '${name}' not found.`);
+
+      if (templateConfig.dependencies?.length) {
         await this.dependencyService.install(templateConfig.dependencies, false);
       }
 
-      // 2. Install component dependencies (sidebar, header, etc.)
-      if (
-        templateConfig.componentDependencies &&
-        templateConfig.componentDependencies?.length > 0
-      ) {
-        spinner.text = `Installing internal component dependencies...`;
-
+      if (templateConfig.componentDependencies?.length) {
         for (const dep of templateConfig.componentDependencies) {
-          await this.componentService.install(dep);
+          const compService = new ComponentService({
+            silent: this.silent,
+            json: this.json,
+          });
+          await compService.install(dep);
         }
       }
 
-      // 3. Download template layout files
-      spinner.text = `Downloading template layout files...`;
-
-      const templateDir = path.resolve(config.templateDir, name.toLowerCase());
+      const templateDir = path.resolve(config.templateDir, name);
       await fs.ensureDir(templateDir);
 
       const baseUrl = config.registryUrl.substring(0, config.registryUrl.lastIndexOf('/'));
 
-      for (const fileKey in templateConfig.files) {
-        const fileInfo = templateConfig.files[fileKey];
+      for (const key in templateConfig.files) {
+        const fileInfo = templateConfig.files[key];
         const fileUrl = `${baseUrl}/${fileInfo.path}`;
 
-        const { data: content } = await axios.get(fileUrl, {
-          responseType: 'text',
-        });
+        const { data } = await axios.get(fileUrl, { responseType: 'text' });
 
         const fileName = path.basename(fileInfo.path);
-        const filePath = path.join(templateDir, fileName);
-
-        await this.safeWriteFile(filePath, content);
+        await fs.writeFile(path.join(templateDir, fileName), data);
       }
 
-      spinner.succeed(chalk.green(`Template layout installed: ${chalk.cyan(name)}`));
-      logger.info(`Template saved at: ${chalk.yellow(templateDir)}`);
-    } catch (err) {
-      spinner.fail(`Failed to install template: ${name}`);
-      if (err instanceof Error) logger.error(err.message);
+      spinner && spinner.succeed(chalk.green(`Template installed: ${chalk.cyan(name)}`));
+
+      if (this.json) {
+        console.log(JSON.stringify({ template: name, status: 'installed' }));
+      }
+    } catch (error) {
+      spinner && spinner.fail(`Failed installing template`);
+
+      const message = error instanceof Error ? error.message : 'Template install failed';
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+
       process.exit(1);
     }
   }

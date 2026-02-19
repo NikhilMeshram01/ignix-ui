@@ -8,13 +8,31 @@ import { loadConfig } from '../utils/config';
 import { logger } from '../utils/logger';
 import { DependencyService } from './DependencyService';
 
+interface ServiceOptions {
+  silent?: boolean;
+  json?: boolean;
+}
+
 export class ComponentService {
   private registryService = new RegistryService();
-  private dependencyService = new DependencyService();
+  private dependencyService: DependencyService;
   private config = loadConfig();
+  private silent: boolean;
+  private json: boolean;
+
+  constructor(options?: ServiceOptions) {
+    this.silent = options?.silent ?? false;
+    this.json = options?.json ?? false;
+
+    this.dependencyService = new DependencyService({
+      silent: this.silent,
+      json: this.json,
+    });
+  }
 
   public async install(name: string): Promise<void> {
-    const spinner = ora(`Installing component: ${name}...`).start();
+    const spinner =
+      !this.silent && !this.json ? ora(`Installing component: ${name}...`).start() : null;
 
     try {
       const config = await this.config;
@@ -24,56 +42,59 @@ export class ComponentService {
         throw new Error(`Component '${name}' not found.`);
       }
 
-      // 1. Install dependencies
-      if (componentConfig.dependencies && componentConfig.dependencies.length > 0) {
-        spinner.text = `Installing dependencies for ${name}...`;
+      if (componentConfig.dependencies?.length) {
+        spinner && (spinner.text = `Installing dependencies...`);
         await this.dependencyService.install(componentConfig.dependencies, false);
       }
 
-      // 1.a To Install internal component dependencies
-      if (
-        componentConfig.componentDependencies &&
-        componentConfig.componentDependencies?.length > 0
-      ) {
-        spinner.text = `Installing internal component dependencies...`;
-
+      if (componentConfig.componentDependencies?.length) {
         for (const dep of componentConfig.componentDependencies) {
           await this.install(dep);
         }
       }
 
-      // 2. Fetch and write files
-      spinner.text = `Getting component files for ${name}...`;
-      const registryBaseUrl = config.registryUrl.substring(0, config.registryUrl.lastIndexOf('/'));
-      const installedFiles: string[] = [];
+      spinner && (spinner.text = `Downloading files...`);
+
+      const baseUrl = config.registryUrl.substring(0, config.registryUrl.lastIndexOf('/'));
+
       const componentsDir = path.resolve(config.componentsDir);
       const componentDir = path.join(componentsDir, name.toLowerCase());
 
-      // Create component directory
       await fs.ensureDir(componentDir);
 
-      // Fetch and write each file
       for (const fileKey in componentConfig.files) {
         const fileInfo = componentConfig.files[fileKey];
-        const fileUrl = `${registryBaseUrl}/${fileInfo.path}`;
+        const fileUrl = `${baseUrl}/${fileInfo.path}`;
 
-        const { data: content } = await axios.get(fileUrl, { responseType: 'text' });
+        const { data: content } = await axios.get(fileUrl, {
+          responseType: 'text',
+        });
 
-        // Use path.basename to handle nested file structures within the component folder
         const fileName = path.basename(fileInfo.path);
         const filePath = path.join(componentDir, fileName);
 
         await fs.writeFile(filePath, content);
-        installedFiles.push(filePath);
       }
 
-      spinner.succeed(chalk.green(`Successfully installed component: ${chalk.cyan(name)}`));
-      logger.info(`Component files written to ${chalk.yellow(componentDir)}`);
-    } catch (error) {
-      spinner.fail(`Failed to install component: ${name}.`);
-      if (error instanceof Error) {
-        logger.error(error.message);
+      if (spinner) {
+        spinner.succeed(chalk.green(`Installed component: ${chalk.cyan(name)}`));
+        logger.info(`Files written → ${chalk.yellow(componentDir)}`);
       }
+
+      if (this.json) {
+        console.log(JSON.stringify({ component: name, status: 'installed' }));
+      }
+    } catch (error) {
+      spinner && spinner.fail(`Failed installing ${name}`);
+
+      const message = error instanceof Error ? error.message : 'Install failed';
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+
       process.exit(1);
     }
   }

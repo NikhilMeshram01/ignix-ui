@@ -6,69 +6,89 @@ import { logger } from '../utils/logger';
 import { loadConfig } from '../utils/config';
 import axios from 'axios';
 
-interface ThemePresetConfig {
+export interface ThemePresetConfig {
   id: string;
   name: string;
   description: string;
-  category: string;
-  theme: object;
+  category?: string;
+  theme: unknown;
 }
+
+interface ServiceOptions {
+  silent?: boolean;
+  json?: boolean;
+}
+
 export class ThemeService {
+  private silent: boolean;
+  private json: boolean;
   private themes: Record<string, ThemePresetConfig> | null = null;
 
+  constructor(options?: ServiceOptions) {
+    this.silent = options?.silent ?? false;
+    this.json = options?.json ?? false;
+  }
+
+  //------------------------------------------------------------
+  // Fetch themes from registry
+  //------------------------------------------------------------
   private async fetchThemes(): Promise<Record<string, ThemePresetConfig>> {
-    if (this.themes) {
-      return this.themes;
-    }
+    if (this.themes) return this.themes;
 
     const config = await loadConfig();
-    const spinner = ora('Fetching themes...').start();
+
+    const spinner = !this.silent && !this.json ? ora('Fetching themes...').start() : null;
 
     try {
       const response = await axios.get<Record<string, ThemePresetConfig>>(config.themeUrl);
-      spinner.succeed('Themes fetched successfully');
+
+      spinner && spinner.succeed('Themes fetched');
       this.themes = response.data;
+
       return this.themes;
     } catch (error) {
-      spinner.fail('Failed to fetch themes');
-      logger.error('Could not connect to the theme registry. Please check your connection.');
+      spinner && spinner.fail('Failed to fetch themes');
+
+      const message = error instanceof Error ? error.message : 'Could not fetch themes';
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+
       process.exit(1);
     }
   }
 
-  public async getThemeConfig(id: string): Promise<ThemePresetConfig | undefined> {
-    const themes = await this.fetchThemes();
-    const themeData: any = themes[id];
-
-    if (!themeData) {
-      return undefined;
-    }
-
-    return {
-      category: themeData.category,
-      id: themeData.id,
-      name: themeData.name,
-      description: themeData.description,
-      theme: themeData,
-    };
-  }
-
+  //------------------------------------------------------------
+  // LIST: available themes
+  //------------------------------------------------------------
   public async getAvailableThemes(): Promise<ThemePresetConfig[]> {
     const themes = await this.fetchThemes();
     return Object.values(themes);
   }
 
-  /**
-   * Fetches a theme preset from the theme registry and writes it to a file.
-   */
+  //------------------------------------------------------------
+  // GET single theme
+  //------------------------------------------------------------
+  public async getThemeConfig(id: string): Promise<ThemePresetConfig | undefined> {
+    const themes = await this.fetchThemes();
+    return themes[id];
+  }
+
+  //------------------------------------------------------------
+  // INSTALL theme
+  //------------------------------------------------------------
   public async install(id: string): Promise<void> {
-    const spinner = ora(`Installing theme preset: ${id}...`).start();
+    const spinner = !this.silent && !this.json ? ora(`Installing theme: ${id}...`).start() : null;
+
     try {
       const config = await loadConfig();
       const themeConfig = await this.getThemeConfig(id);
 
       if (!themeConfig) {
-        throw new Error(`Theme preset '${id}' not found in the registry.`);
+        throw new Error(`Theme '${id}' not found`);
       }
 
       const destDir = path.resolve(config.themesDir);
@@ -76,24 +96,33 @@ export class ThemeService {
 
       const destFile = path.join(destDir, `${id}.ts`);
 
-      // Convert theme ID to camelCase for variable name (e.g., "the-neon" -> "theNeon")
-      const variableName = themeConfig.id.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      const variableName = id.replace(/-([a-z])/g, (_, l: string) => l.toUpperCase());
 
-      const fileContent = `import type { ThemeConfig } from '@mindfiredigital/ignix-ui';
-
-export const ${variableName}Theme: ThemeConfig = ${JSON.stringify(themeConfig.theme, null, 2)};
-`;
+      const fileContent = `export const ${variableName}Theme = ${JSON.stringify(
+        themeConfig.theme,
+        null,
+        2
+      )};`;
 
       await fs.writeFile(destFile, fileContent);
 
-      spinner.succeed(chalk.green(`Successfully installed theme: ${chalk.cyan(themeConfig.name)}`));
-      logger.info(`Preset file created at: ${chalk.yellow(destFile)}`);
-      logger.info(`You can now import it and pass to your <ThemeProvider>.`);
-    } catch (error) {
-      spinner.fail(`Failed to install theme preset: ${id}.`);
-      if (error instanceof Error) {
-        logger.error(error.message);
+      spinner && spinner.succeed(chalk.green(`Installed theme: ${chalk.cyan(id)}`));
+
+      if (this.json) {
+        console.log(JSON.stringify({ theme: id, status: 'installed' }));
       }
+    } catch (error) {
+      spinner && spinner.fail(`Failed installing theme`);
+
+      const message = error instanceof Error ? error.message : 'Theme install failed';
+
+      if (this.json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+
+      process.exit(1);
     }
   }
 }
