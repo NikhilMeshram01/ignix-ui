@@ -25,6 +25,25 @@
         }
       },
       "command": "npx ignix add component {{join components}} --yes {{#if cwd}}--cwd {{cwd}}{{/if}}"
+    },
+    {
+      "name": "list_components",
+      "description": "List available components",
+      "command": "npx ignix list --json"
+    },
+    {
+      "name": "get_component",
+      "description": "Get component metadata",
+      "inputSchema": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "command": "npx ignix info {{name}} --json"
     }
   ],
   "resources": [
@@ -42,6 +61,6 @@
   "capabilities": {
     "supportsNonInteractive": true,
     "requiresNetwork": true,
-    "outputFormats": ["text"]
+    "outputFormats": ["json"]
   }
 }

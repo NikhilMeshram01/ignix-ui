@@ -13,349 +13,130 @@ const DEFAULT_CONFIG_PATH = 'ignix.config.js';
 export const initCommand = new Command()
   .name('init')
   .description(chalk.bold(chalk.hex('#FF7A3D')('Initialize Ignix UI in your project.')))
-  .action(async () => {
-    const spinner = ora('Initializing Ignix UI...').start();
+  .option('-y, --yes', 'Skip prompts')
+  .option('--json', 'Machine output')
+  .option('--cwd <path>', 'Working directory', '.')
+  .action(async (options) => {
+    const json = options.json;
+    const silent = options.yes || json;
+    const cwd = path.resolve(options.cwd || process.cwd());
+
+    const exitWithError = (message: string): never => {
+      if (json) {
+        console.log(JSON.stringify({ success: false, error: message }));
+      } else {
+        logger.error(message);
+      }
+      process.exit(1);
+    };
+
+    const spinner = !silent ? ora('Initializing Ignix UI...').start() : null;
 
     try {
-      // 1. Validate environment
-      await validateEnvironment();
+      await validateEnvironment(cwd);
+      await createProjectStructure(cwd);
+      await createConfigFiles(cwd);
+      await setupIgnixUIAlias(cwd);
 
-      // 2. Create project structure
-      await createProjectStructure();
+      const configPath = path.resolve(cwd, DEFAULT_CONFIG_PATH);
 
-      // 3. Create config files
-      await createConfigFiles();
-
-      // 4. Set up Ignix UI alias
-      await setupIgnixUIAlias();
-
-      // 5. Create directories
-      const configPath = path.resolve(process.cwd(), DEFAULT_CONFIG_PATH);
-
-      // Read the config file as text first to determine its format
-      const configContent = await fs.readFile(configPath, 'utf-8');
-      const isESM =
-        configContent.includes('export default') || configContent.includes('export const');
-
-      let config;
-      try {
-        if (isESM) {
-          // For ESM, we need to use dynamic import with file:// URL
-          const fileUrl = `file://${configPath}${
-            path.extname(configPath) === '.mjs' ? '' : '?t=' + Date.now()
-          }`;
-          const module = await import(fileUrl);
-          config = module.default || module;
-        } else {
-          // For CommonJS
-          delete require.cache[require.resolve(configPath)];
-          // Create a temporary file with the config content
-          const tempFile = path.join(process.cwd(), 'temp-config.cjs');
-          await fs.writeFile(
-            tempFile,
-            `module.exports = ${configContent.replace(/^module\.exports\s*=\s*|\s*;?\s*$/g, '')};`
-          );
-          config = require(tempFile);
-          // Clean up the temporary file
-          await fs.remove(tempFile).catch((e) => {
-            logger.warn(`Failed to remove temporary file: ${e}`);
-          });
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        logger.error(`Failed to load config: ${errorMessage}`);
-        throw error;
+      if (!(await fs.pathExists(configPath))) {
+        exitWithError('ignix.config.js not found after init');
       }
 
-      const { componentsDir, themesDir } = config;
-      await fs.ensureDir(path.resolve(componentsDir));
-      await fs.ensureDir(path.resolve(themesDir));
-      logger.success('Created required directories.');
+      const config = await import(`file://${configPath}?t=${Date.now()}`).then(
+        (m) => m.default || m
+      );
 
-      // Ask about theming setup
-      const themingResponse = await prompts({
-        type: 'select',
-        name: 'setupTheming',
-        message: 'Do you want to set up the Ignix theming system? (Recommended)',
-        choices: [
-          { title: 'Yes', value: true },
-          { title: 'No', value: false },
-        ],
-      });
+      await fs.ensureDir(path.resolve(cwd, config.componentsDir));
+      await fs.ensureDir(path.resolve(cwd, config.themesDir));
 
-      if (themingResponse.setupTheming === true) {
-        spinner.text = 'Setting up theming system...';
-        const themeService = new ThemeService();
+      if (!silent) logger.success('Created required directories.');
 
-        // 1. Ask user to select a preset
-        spinner.text = 'Fetching theme presets...';
-        const availableThemes = await themeService.getAvailableThemes();
-        spinner.stop();
+      // Optional theming (interactive only)
+      if (!silent) {
+        const themingResponse = await prompts({
+          type: 'select',
+          name: 'setupTheming',
+          message: 'Set up theming system?',
+          choices: [
+            { title: 'Yes', value: true },
+            { title: 'No', value: false },
+          ],
+        });
 
-        if (availableThemes.length > 0) {
-          const presetResponse = await prompts({
+        if (themingResponse.setupTheming) {
+          const themeService = new ThemeService({ cwd });
+          const themes = await themeService.getAvailableThemes();
+
+          const preset = await prompts({
             type: 'select',
             name: 'themeId',
-            message: 'Select a default theme preset to install:',
+            message: 'Select theme preset:',
             choices: [
-              ...availableThemes.map((t) => ({ title: t.name, value: t.id })),
-              { title: 'None for now', value: null },
+              ...themes.map((t) => ({ title: t.name, value: t.id })),
+              { title: 'Skip', value: null },
             ],
           });
 
-          if (presetResponse.themeId) {
-            spinner.start('Installing selected theme preset...');
-            await themeService.install(presetResponse.themeId);
+          if (preset.themeId) {
+            await themeService.install(preset.themeId);
           }
         }
       }
 
-      // 2. Install dependencies
-      spinner.text = 'Installing required dependencies...';
-      const depService = new DependencyService();
+      const depService = new DependencyService({ silent, json, cwd });
+
       await depService.install(['@mindfiredigital/ignix-ui'], false);
       await depService.install(['tailwindcss', 'postcss', 'autoprefixer'], true);
 
-      spinner.succeed(chalk.green('Ignix UI initialized successfully!'));
-      logger.info('\nNext steps:');
-      logger.info(
-        `1. Wrap your app in the <ThemeProvider> from ${chalk.cyan("'./themes/ThemeProvider'")}`
-      );
-      logger.info(
-        `2. Add components with ${chalk.cyan('npx ignix add component <component-name>')}`
-      );
-      logger.info(`3. Explore themes with ${chalk.cyan('npx ignix themes list')}`);
-    } catch (error) {
-      spinner.fail('Initialization failed.');
-      if (error instanceof Error) {
-        logger.error(error.message);
+      spinner && spinner.succeed('Ignix initialized');
+
+      if (json) {
+        console.log(JSON.stringify({ success: true, initialized: true }));
       }
-      process.exit(1);
+    } catch (err) {
+      spinner && spinner.fail('Initialization failed');
+      exitWithError(err instanceof Error ? err.message : 'Init failed');
     }
   });
 
-// Helper functions
-async function validateEnvironment() {
-  const hasPackageJson = await fs.pathExists(path.resolve('package.json'));
-  if (!hasPackageJson) {
-    throw new Error('No package.json found. Please run `npm init` or `yarn init` first.');
+// ---------------- Helpers ----------------
+
+async function validateEnvironment(cwd: string) {
+  const hasPackageJson = await fs.pathExists(path.join(cwd, 'package.json'));
+  if (!hasPackageJson) throw new Error('No package.json found');
+
+  const hasNodeModules = await fs.pathExists(path.join(cwd, 'node_modules'));
+  if (!hasNodeModules) throw new Error('Run npm install first');
+}
+
+async function createProjectStructure(cwd: string) {
+  await fs.ensureDir(path.join(cwd, 'src/components/ui'));
+  await fs.ensureDir(path.join(cwd, 'src/utils'));
+}
+
+async function createConfigFiles(cwd: string) {
+  const configTemplate = path.resolve(__dirname, './templates/ignix.config.js');
+  const dest = path.join(cwd, DEFAULT_CONFIG_PATH);
+
+  if (!(await fs.pathExists(dest))) {
+    await fs.copy(configTemplate, dest);
   }
 
-  const hasNodeModules = await fs.pathExists('node_modules');
-  if (!hasNodeModules) {
-    throw new Error('node_modules not found. Please run `npm install` or `yarn install` first.');
+  const llmsPath = path.join(cwd, 'llms.txt');
+  if (!(await fs.pathExists(llmsPath))) {
+    await fs.writeFile(
+      llmsPath,
+      `# Ignix UI\nReact component CLI with AI support.\nUse:\nnpx ignix add component button --yes --json`
+    );
   }
 }
 
-async function createProjectStructure() {
-  await fs.ensureDir(path.resolve('src/components/ui'));
-  await fs.ensureDir(path.resolve('src/utils'));
-}
-
-async function createConfigFiles() {
-  await createUtilsFile();
-  await createLlmsTxtFile();
-  await createIgnixConfigFIle();
-  await updateGlobalStyles();
-}
-
-async function setupIgnixUIAlias(): Promise<void> {
-  const root = process.cwd();
+async function setupIgnixUIAlias(cwd: string) {
   const templatesDir = path.resolve(__dirname, './templates');
 
-  // 1️⃣ Copy tsconfig.app.json template
-  const tsconfigTemplatePath = path.join(templatesDir, 'tsconfig.app.json');
-  const tsconfigPath = path.resolve(root, 'tsconfig.app.json');
+  await fs.copy(path.join(templatesDir, 'tsconfig.app.json'), path.join(cwd, 'tsconfig.app.json'));
 
-  await fs.copy(tsconfigTemplatePath, tsconfigPath);
-  logger.success('✔ Created tsconfig.app.json with @ignix-ui alias');
-
-  // 2️⃣ Copy vite.config.ts template
-  const viteConfigTemplatePath = path.join(templatesDir, 'vite.config.ts');
-  const viteConfigPath = path.resolve(root, 'vite.config.ts');
-
-  await fs.copy(viteConfigTemplatePath, viteConfigPath);
-  logger.success('✔ Created vite.config.ts with @ignix-ui alias and TailwindCSS plugin');
-
-  // 3) Create plugins/webpack-alias.ts
-  const pluginsDir = path.resolve(root, 'plugins');
-  await fs.ensureDir(pluginsDir);
-  const webpackAliasFile = path.join(pluginsDir, 'webpack-alias.ts');
-
-  if (!(await fs.pathExists(webpackAliasFile))) {
-    const pluginCode = `import path from 'path';
-
-      export default function webpackAliasPlugin() {
-        return {
-          name: 'webpack-alias-plugin',
-          configureWebpack() {
-            return {
-              resolve: {
-                alias: {
-                  '@ignix-ui': path.resolve(process.cwd(), 'node_modules/@mindfiredigital/ignix-ui/components'),
-                },
-              },
-            };
-          },
-        };
-      }
-      `;
-    await fs.writeFile(webpackAliasFile, pluginCode, 'utf8');
-    logger.success('✔ Created plugins/webpack-alias.ts');
-  } else {
-    logger.info('plugins/webpack-alias.ts already exists — skipping');
-  }
-}
-
-async function createUtilsFile() {
-  const utilsPath = path.resolve('src/utils/cn.ts');
-  if (await fs.pathExists(utilsPath)) return;
-
-  const content = `import { clsx, type ClassValue } from 'clsx'
-  import { twMerge } from 'tailwind-merge'
-  
-  export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-  }`;
-
-  await fs.writeFile(utilsPath, content);
-}
-
-async function createLlmsTxtFile() {
-  const filePath = path.resolve('llms.txt');
-  if (await fs.pathExists(filePath)) return;
-
-  const content = `# Ignix UI
-  A command-line interface (CLI) for managing and developing Ignix UI components.
-  
-  ## Project Overview
-  - **Primary Language**: TypeScript
-  - **Framework**: React
-  - **Styling**: Tailwind CSS
-  
-  ## Key Directories
-  - components/ui/: Where components are installed
-  - lib/utils/: Utility functions
-  
-  ## CLI Commands
-  - \`ignix init\`: Initialize Ignix UI
-  - \`ignix add <component>\`: Add a component
-  - \`ignix themes\`: Manage themes`;
-
-  await fs.writeFile(filePath, content);
-}
-
-async function createIgnixConfigFIle() {
-  const configTemplatePath = path.resolve(__dirname, './templates/ignix.config.js');
-  if (await fs.pathExists(DEFAULT_CONFIG_PATH)) {
-    logger.info('`ignix.config.js` already exists. Skipping creation.');
-  } else {
-    await fs.copy(configTemplatePath, DEFAULT_CONFIG_PATH);
-    logger.success('Created `ignix.config.js`.');
-  }
-}
-
-async function updateGlobalStyles() {
-  const root = process.cwd();
-
-  // Try multiple possible paths to find custom.css
-  // 1. Relative to CLI tool (monorepo structure)
-  // 2. Relative to project root (if docs is in the same repo)
-  const possibleCustomCssPaths = [
-    path.resolve(__dirname, '../../../apps/docs/src/css/custom.css'),
-    path.resolve(root, '../docs/src/css/custom.css'),
-    path.resolve(root, 'apps/docs/src/css/custom.css'),
-    path.resolve(root, 'docs/src/css/custom.css'),
-  ];
-
-  let customCssPath: string | null = null;
-  for (const cssPath of possibleCustomCssPaths) {
-    if (await fs.pathExists(cssPath)) {
-      customCssPath = cssPath;
-      break;
-    }
-  }
-
-  // Check if custom.css exists
-  if (!customCssPath) {
-    logger.warn('Custom CSS file not found. Skipping CSS update.');
-    return;
-  }
-
-  // Read the custom.css content
-  const customCssContent = await fs.readFile(customCssPath, 'utf-8');
-
-  // Detect project type and find the appropriate CSS file
-  const possibleCssPaths = [
-    // Next.js App Router
-    path.join(root, 'src', 'styles', 'globals.css'),
-    path.join(root, 'src', 'app', 'globals.css'),
-    // Vite/React
-    path.join(root, 'src', 'index.css'),
-    path.join(root, 'src', 'App.css'),
-    // Generic
-    path.join(root, 'src', 'styles.css'),
-    path.join(root, 'src', 'app.css'),
-    path.join(root, 'app.css'),
-    path.join(root, 'index.css'),
-  ];
-
-  let cssFilePath: string | null = null;
-  for (const cssPath of possibleCssPaths) {
-    if (await fs.pathExists(cssPath)) {
-      cssFilePath = cssPath;
-      break;
-    }
-  }
-
-  // If no CSS file exists, create one in the most common location
-  if (!cssFilePath) {
-    // Check if it's a Next.js project
-    const isNextJs =
-      (await fs.pathExists(path.join(root, 'next.config.js'))) ||
-      (await fs.pathExists(path.join(root, 'next.config.ts'))) ||
-      (await fs.pathExists(path.join(root, 'src', 'app')));
-
-    if (isNextJs) {
-      cssFilePath = path.join(root, 'src', 'styles', 'globals.css');
-      await fs.ensureDir(path.dirname(cssFilePath));
-    } else {
-      // Default to src/index.css for Vite/React
-      cssFilePath = path.join(root, 'src', 'index.css');
-      await fs.ensureDir(path.dirname(cssFilePath));
-    }
-  }
-
-  if (cssFilePath) {
-    // Read existing content if file exists
-    let existingContent = '';
-    if (await fs.pathExists(cssFilePath)) {
-      existingContent = await fs.readFile(cssFilePath, 'utf-8');
-    }
-
-    // Merge or replace: if file has Tailwind directives, prepend custom.css, otherwise replace
-    let finalContent = '';
-    if (
-      existingContent &&
-      (existingContent.includes('@tailwind') || existingContent.includes('@import'))
-    ) {
-      // Merge: keep Tailwind directives and add custom.css content
-      const tailwindDirectives =
-        existingContent.match(/@(?:tailwind|import)[^;]+;?/g)?.join('\n') || '';
-      const restOfContent = existingContent.replace(/@(?:tailwind|import)[^;]+;?\n?/g, '').trim();
-
-      // Extract @import 'tailwindcss' from custom.css if present
-      const customCssWithoutTailwind = customCssContent
-        .replace(/@import\s+['"]tailwindcss['"];?\n?/g, '')
-        .trim();
-
-      finalContent = `${tailwindDirectives}\n\n${customCssWithoutTailwind}\n\n${restOfContent}`.trim();
-    } else {
-      // Replace: use custom.css content
-      finalContent = customCssContent;
-    }
-
-    await fs.writeFile(cssFilePath, finalContent, 'utf-8');
-    logger.success(`✔ Updated ${path.relative(root, cssFilePath)} with custom styles`);
-  }
+  await fs.copy(path.join(templatesDir, 'vite.config.ts'), path.join(cwd, 'vite.config.ts'));
 }
