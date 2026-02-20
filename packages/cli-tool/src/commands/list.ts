@@ -1,69 +1,48 @@
 import { Command } from 'commander';
-import path from 'path';
-import chalk from 'chalk';
 import { RegistryService } from '../services/RegistryService';
-import { ThemeService } from '../services/ThemeService';
+import chalk from 'chalk';
 import { logger } from '../utils/logger';
+import { ThemeService } from '../services/ThemeService';
 
 export const listCommand = new Command()
   .name('list')
-  .description(chalk.hex('#FF6B35')('List components or themes'))
-  .argument('<namespace>')
-  .option('--json', 'Machine output')
-  .option('--cwd <path>', 'Working directory', '.')
-  .action(async (namespace, options) => {
-    const json = options.json;
-    const cwd = path.resolve(options.cwd || process.cwd());
+  .description(chalk.hex('#FF6B35')('List available components or themes from the registry.'))
+  .argument('<namespace>', 'The type of asset to list (e.g., component, theme)')
+  .action(async (namespace) => {
+    const registryService = new RegistryService();
+    const themeService = new ThemeService();
 
-    const registryService = new RegistryService({ json, cwd });
-    const themeService = new ThemeService({ json, cwd });
-
-    try {
-      switch (namespace) {
-        case 'component':
-        case 'components': {
-          const components = await registryService.getAvailableComponents();
-
-          if (json) {
-            console.log(JSON.stringify({ success: true, components }));
-          } else {
-            logger.info(chalk.bold('Available Components:'));
-            components.forEach((c) => {
-              console.log(`- ${chalk.cyan(c.name)}: ${c.description}`);
-            });
-          }
-          break;
+    switch (namespace) {
+      case 'component':
+      case 'components': {
+        const components = await registryService.getAvailableComponents();
+        if (components.length > 0) {
+          logger.info(chalk.bold('Available Components:'));
+          components.forEach((comp) => {
+            console.log(`- ${chalk.cyan(comp.name)}: ${comp.description}`);
+          });
+        } else {
+          logger.warn('No components found in the registry.');
         }
+        break;
+      }
 
-        case 'theme':
-        case 'themes': {
-          const themes = await themeService.getAvailableThemes();
-
-          if (json) {
-            console.log(JSON.stringify({ success: true, themes }));
-          } else {
-            logger.info(chalk.bold('Available Themes:'));
-            themes.forEach((t) => {
-              console.log(`- ${chalk.cyan(t.name)} (${t.id}): ${t.description}`);
-            });
-          }
-          break;
+      case 'theme':
+      case 'themes': {
+        const themes = await themeService.getAvailableThemes();
+        if (themes.length > 0) {
+          logger.info(chalk.bold('Available Themes:'));
+          themes.forEach((theme) => {
+            console.log(`- ${chalk.cyan(theme.name)} (${theme.id}): ${theme.description}`);
+          });
+        } else {
+          logger.warn('No themes found in the registry.');
         }
+        break;
+      }
 
-        default:
-          if (json) {
-            console.log(JSON.stringify({ success: false, error: 'Unknown namespace' }));
-          } else {
-            logger.error(`Unknown namespace '${namespace}'`);
-          }
-          process.exit(1);
-      }
-    } catch (err) {
-      if (json) {
-        console.log(JSON.stringify({ success: false, error: 'List failed' }));
-      } else {
-        logger.error('List failed');
-      }
-      process.exit(1);
+      default:
+        logger.error(`Unknown namespace: '${namespace}'. Please use 'component' or 'theme'.`);
+        process.exit(1);
     }
   });
